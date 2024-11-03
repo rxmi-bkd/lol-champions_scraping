@@ -3,34 +3,53 @@ import random
 
 import pandas as pd
 
-from utils import get_all_dates_in_year
+from datetime import date, timedelta
 
-if __name__ == '__main__':
-    start_year = 2024 # Include this year
-    end_year = 2035 # Exclude this year
 
-    languages_df = pd.read_csv('languages.csv')
-    codes = languages_df.code.tolist()
+def get_all_dates_in_year(year: int):
+    start_date = date(year, 1, 1)
+
+    end_date = date(year + 1, 1, 1)
+
+    dates = []
+
+    while start_date < end_date:
+        dates.append(start_date.strftime("%Y-%m-%d"))
+        start_date += timedelta(days=1)
+
+    return dates
+
+
+if __name__ == "__main__":
+    start_year = 2024  # Include this year
+    end_year = 2035  # Exclude this year
+
+    languages = pd.read_csv("data/language.csv").language.tolist()
 
     for year in range(start_year, end_year):
         dates = get_all_dates_in_year(year)
-        random.Random(year).shuffle(dates) # Shuffle the dates for random cotd
+        random.Random(year).shuffle(dates)
 
-        if not os.path.exists(f'cotd_data/{year}'):
-            os.makedirs(f'cotd_data/{year}')
+        if not os.path.exists(f"cotd/{year}"):
+            os.makedirs(f"cotd/{year}")
 
-        for code in codes:
-            cotd_data = []
+        for language in languages:
+            cotd = []
 
             try:
-                champions_data_df = pd.read_csv(f'champions_data/champions_data_{code}.csv')
-                champions_data_df = champions_data_df.fillna('')
+                champion_data_df = pd.read_csv(f"data/champion/champion_{language}.csv")
+                champion_data_df = champion_data_df.fillna("")
             except FileNotFoundError:
                 continue
 
-            for i, date in enumerate(dates):
-                cotd_data.append([date] + champions_data_df.iloc[i % len(champions_data_df)].tolist())
+            for i, d in enumerate(dates):
+                cotd.append(
+                    [d] + champion_data_df.iloc[i % len(champion_data_df)].tolist()
+                )
 
-            # Save the data for the current language
-            cotd_data_df = pd.DataFrame(cotd_data, columns=['date'] + champions_data_df.columns.tolist())
-            cotd_data_df.to_csv(f'cotd_data/{year}/cotd_data_{code}.csv', index=False)
+            # Save the champion for the current language
+            cotd_df = pd.DataFrame(
+                cotd, columns=["date"] + champion_data_df.columns.tolist()
+            )
+
+            cotd_df.to_csv(f"cotd/{year}/{language}.csv", index=False)
